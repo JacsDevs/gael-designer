@@ -88,3 +88,28 @@
   background: #e74c3c;
   color: white;
 }
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.user-info p {
+  margin: 0;
+}
+
+.user-info button {
+  background-color: #ff4d4d;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.user-info button:hover {
+  background-color: #ff2d2d;
+}
+

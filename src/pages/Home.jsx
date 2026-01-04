@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import PackageCard from '../components/PackageCard'
 import Footer from '../components/Footer'
 import { getPackages } from '../services/packagesService'
-import logo from '../assets/images/logo.png';
-import sublogo from '../assets/images/sublogo.png';
-import gael from '../assets/images/gael.png'
+import desktopImage from '../assets/images/desktop-image.jpg';
+import mobileImage from '../assets/images/mobile-image.jpg';
 
 export default function Home() {
   const [packages, setPackages] = useState([])
@@ -27,22 +26,16 @@ export default function Home() {
 
   return (
     <>
-      {/* Seção de Boas-Vindas */}
+      {/* Seção de Boas-Vindas com imagens adaptativas */}
       <div className="welcome-section">
-        <div className="row-content">
-          <div className='group-content'>
-            <div className="welcome-left">
-              <img src={logo} alt="Logo" className="logo-img" />
-              <img src={sublogo} alt="Sublogo" className="sublogo-img" />
-              <p className="subtitle">Design Profissional para Identidade Visual e Eventos</p>
-              <button className="btn-call-to-action">Falar no WhatsApp</button>
-            </div>
-            <div className="welcome-right">
-              <img src={gael} alt="Gael" className="welcome-image" />
-            </div>
-          </div>
+        <div className="image-container">
+          {/* Imagem desktop (16:9) */}
+          <img src={desktopImage} alt="Imagem de Apresentação - Desktop" className="image-desktop" />
+          {/* Imagem mobile */}
+          <img src={mobileImage} alt="Imagem de Apresentação - Mobile" className="image-mobile" />
         </div>
       </div>
+
       <div className="container">
         <h2 className="section-title">Nossos Combos Promocionais</h2>
 

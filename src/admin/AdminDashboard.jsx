@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   collection,
   getDocs,
@@ -16,6 +16,9 @@ import {
 import { v4 as uuid } from 'uuid'
 import { db, storage } from '../services/firebase'
 import '../styles/admin.css'
+import { signOut } from 'firebase/auth'
+import { auth } from '../services/firebase'
+import { useNavigate } from 'react-router-dom'
 
 const WHATSAPP_BASE =
   'https://wa.me/5591999151500?text='
@@ -69,8 +72,15 @@ export default function AdminDashboard() {
   const [editingPackage, setEditingPackage] = useState(null)
   const [isCreating, setIsCreating] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
+  const navigate = useNavigate()
 
   useEffect(() => {
+    // Verifica se o usuário está logado e pega o e-mail
+    const user = auth.currentUser
+    if (user) {
+      setUserEmail(user.email)
+    }
     loadPackages()
   }, [])
 
@@ -228,10 +238,27 @@ export default function AdminDashboard() {
     loadPackages()
   }
 
+  // Função para deslogar
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      navigate('/admin/login')  // Redireciona para a página de login após deslogar
+    } catch (error) {
+      console.error('Erro ao deslogar:', error)
+    }
+  }
+
   return (
     <div className="admin-container">
       <header className="admin-header">
         <h2>Painel de Combos</h2>
+
+        {/* Exibe o e-mail do usuário logado */}
+        <div className="user-info">
+          <p>Bem-vindo, {userEmail}</p>
+          <button className="btn-secondary" onClick={handleLogout}>Deslogar</button>
+        </div>
+
         <button className="btn-primary" onClick={startCreate}>
           + Novo Combo
         </button>

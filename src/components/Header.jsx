@@ -1,7 +1,11 @@
+import logo from '../assets/images/logo.png';
+import sublogo from '../assets/images/sublogo.png';
+
 export default function Header() {
   return (
     <header>
-      <div className="logo-text">GAEL DESIGNER</div>
+      <img src={logo} alt="Logo" className="logo-img" />
+      <img src={sublogo} alt="SubLogo" className="sublogo-img" />
       <p className="subtitle">
         Design Profissional para Identidade Visual e Eventos
       </p>
@@ -13,5 +17,6 @@ export default function Header() {
         Falar no WhatsApp
       </a>
     </header>
-  )
+  );
 }
+

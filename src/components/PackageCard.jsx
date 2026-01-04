@@ -1,12 +1,14 @@
-export default function PackageCard({ title, description, price, link }) {
+import { Link } from 'react-router-dom'
+
+export default function PackageCard({ id, title, subtitle, price }) {
   return (
     <div className="card">
       <h3>{title}</h3>
-      <p>{description}</p>
+      <p>{subtitle}</p>
       <span className="price">{price}</span>
-      <a href={link} className="btn-order" target="_blank">
-        Pedir Agora
-      </a>
+      <Link to={`/combo/${id}`} className="btn-order">
+        Saber mais
+      </Link>
     </div>
   )
 }

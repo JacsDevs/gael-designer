@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+// 1. Troque o BrowserRouter por HashRouter na importação
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import ComboDetails from './pages/ComboDetails'
 import AdminLogin from './admin/AdminLogin'
@@ -7,7 +8,8 @@ import AdminRoute from './admin/AdminRoute'
 
 function App() {
   return (
-    <BrowserRouter basename="/gael-designer">
+    // 2. Use o HashRouter (não precisa mais do basename="/gael-designer")
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Home />} />
 
@@ -24,7 +26,7 @@ function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

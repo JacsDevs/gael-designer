@@ -7,14 +7,8 @@ import {
   deleteDoc,
   doc
 } from 'firebase/firestore'
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject
-} from 'firebase/storage'
-import { v4 as uuid } from 'uuid'
-import { db, storage } from '../services/firebase'
+import { db } from '../services/firebase'
+import { getComboFolder, getComboMedia } from '../utils/comboMedia'
 import '../styles/admin.css'
 import { signOut } from 'firebase/auth'
 import { auth } from '../services/firebase'
@@ -34,44 +28,11 @@ const emptyPackage = {
   media: []
 }
 
-/* ===================== */
-/* 🔧 IMAGE COMPRESSION */
-/* ===================== */
-async function compressImage(file) {
-  return new Promise(resolve => {
-    const img = new Image()
-    const reader = new FileReader()
-
-    reader.onload = e => (img.src = e.target.result)
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const maxWidth = 1200
-      const scale = Math.min(maxWidth / img.width, 1)
-
-      canvas.width = img.width * scale
-      canvas.height = img.height * scale
-
-      canvas
-        .getContext('2d')
-        .drawImage(img, 0, 0, canvas.width, canvas.height)
-
-      canvas.toBlob(
-        blob => resolve(blob),
-        'image/webp',
-        0.8
-      )
-    }
-
-    reader.readAsDataURL(file)
-  })
-}
-
 export default function AdminDashboard() {
   const [packages, setPackages] = useState([])
   const [editingPackage, setEditingPackage] = useState(null)
+  const [editingId, setEditingId] = useState(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [userEmail, setUserEmail] = useState('')
   const navigate = useNavigate()
 
@@ -138,78 +99,6 @@ export default function AdminDashboard() {
     setEditingPackage(null)
     setIsCreating(false)
     loadPackages()
-  }
-
-  /* ===================== */
-  /* 🖼️ MEDIA UPLOAD */
-  /* ===================== */
-  async function handleMediaUpload(e) {
-    const files = Array.from(e.target.files)
-    if (!files.length) return
-
-    setUploading(true)
-
-    const uploaded = []
-
-    for (const file of files) {
-      const id = uuid()
-      const isImage = file.type.startsWith('image')
-      let uploadFile = file
-      let path = ''
-
-      if (isImage) {
-        uploadFile = await compressImage(file)
-        path = `packages/${editingPackage.id}/images/${id}.webp`
-      } else {
-        path = `packages/${editingPackage.id}/videos/${id}.mp4`
-      }
-
-      const storageRef = ref(storage, path)
-      await uploadBytes(storageRef, uploadFile)
-      const url = await getDownloadURL(storageRef)
-
-      uploaded.push({
-        id,
-        type: isImage ? 'image' : 'video',
-        url,
-        order: editingPackage.media.length + uploaded.length
-      })
-    }
-
-    setEditingPackage(prev => ({
-      ...prev,
-      media: [...prev.media, ...uploaded]
-    }))
-
-    setUploading(false)
-  }
-
-  /* ===================== */
-  /* 🔁 MEDIA ORDER */
-  /* ===================== */
-  function moveMedia(index, dir) {
-    const list = [...editingPackage.media]
-    const target = dir === 'up' ? index - 1 : index + 1
-    if (target < 0 || target >= list.length) return
-
-    ;[list[index], list[target]] =
-      [list[target], list[index]]
-
-    list.forEach((m, i) => (m.order = i))
-    setEditingPackage({ ...editingPackage, media: list })
-  }
-
-  /* ===================== */
-  /* ❌ REMOVE MEDIA */
-  /* ===================== */
-  async function removeMedia(media) {
-    if (!window.confirm('Excluir mídia?')) return
-    await deleteObject(ref(storage, media.url))
-
-    setEditingPackage(prev => ({
-      ...prev,
-      media: prev.media.filter(m => m.id !== media.id)
-    }))
   }
 
   /* ===================== */
@@ -305,22 +194,19 @@ export default function AdminDashboard() {
           <input placeholder="Texto WhatsApp" value={editingPackage.whatsappText}
             onChange={e => setEditingPackage({ ...editingPackage, whatsappText: e.target.value })} />
 
-          <input type="file" multiple accept="image/*,video/*" onChange={handleMediaUpload} />
+          {/* MEDIA (arquivos no repositório) */}
+          <p>
+            Mídias: coloque os arquivos em{' '}
+            <code>src/assets/combos/{getComboFolder(editingPackage.title) || 'combo-XX'}/</code>{' '}
+            (01.webp, 02.mp4, ...) e publique o site.
+          </p>
 
-          {uploading && <p>Enviando mídia...</p>}
-
-          {/* MEDIA LIST */}
           <div className="media-grid">
-            {editingPackage.media.map((m, i) => (
+            {getComboMedia(editingPackage).map(m => (
               <div key={m.id} className="media-card">
                 {m.type === 'image'
                   ? <img src={m.url} />
                   : <video src={m.url} controls />}
-                <div className="media-actions">
-                  <button onClick={() => moveMedia(i, 'up')}>↑</button>
-                  <button onClick={() => moveMedia(i, 'down')}>↓</button>
-                  <button onClick={() => removeMedia(m)}>✕</button>
-                </div>
               </div>
             ))}
           </div>

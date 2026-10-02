@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import Footer from '../components/Footer'
 import { db } from '../services/firebase'
 import { doc, getDoc } from 'firebase/firestore'
+import { getComboMedia } from '../utils/comboMedia'
 
 export default function ComboDetails() {
   const { id } = useParams()
@@ -19,9 +20,7 @@ export default function ComboDetails() {
       const snapshot = await getDoc(ref)
 
       if (snapshot.exists()) {
-        const data = snapshot.data()
-        data.media?.sort((a, b) => a.order - b.order)
-        setCombo(data)
+        setCombo(snapshot.data())
       }
       setLoading(false)
     }
@@ -32,7 +31,7 @@ export default function ComboDetails() {
   if (loading) return <p style={{ padding: 40 }}>Carregando...</p>
   if (!combo) return <p style={{ padding: 40 }}>Combo não encontrado</p>
 
-  const media = combo.media || []
+  const media = getComboMedia(combo)
   const active = media[current]
 
   function next() {
@@ -59,7 +58,30 @@ export default function ComboDetails() {
         <Link to="/" className="btn-back">← Voltar</Link>
 
         <div className="combo-grid">
+          {/* INFO */}
+          <div className="combo-info-card">
+            <h2 className="combo-title">{combo.title}</h2>
+
+            {combo.subtitle && (
+              <p className="combo-subtitle">{combo.subtitle}</p>
+            )}
+
+            <p className="combo-description">{combo.description}</p>
+
+            <div className="combo-price">{combo.price}</div>
+
+            <a
+              href={combo.whatsappLink}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-order btn-highlight"
+            >
+              Pedir agora no WhatsApp
+            </a>
+          </div>
+          
           {/* GALERIA */}
+          {media.length > 0 && (
           <div className="combo-gallery">
             <div
               className="gallery-main"
@@ -76,7 +98,13 @@ export default function ComboDetails() {
                 {active?.type === 'image' ? (
                   <img src={active.url} alt="" />
                 ) : (
-                  <video src={active.url} />
+                  <video
+                    src={active.url}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
                 )}
               </div>
 
@@ -104,38 +132,21 @@ export default function ComboDetails() {
               ))}
             </div>
           </div>
-
-          {/* INFO */}
-          <div className="combo-info-card">
-            <h2 className="combo-title">{combo.title}</h2>
-
-            {combo.subtitle && (
-              <p className="combo-subtitle">{combo.subtitle}</p>
-            )}
-
-            <p className="combo-description">{combo.description}</p>
-
-            <div className="combo-price">{combo.price}</div>
-
-            <a
-              href={combo.whatsappLink}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-order btn-highlight"
-            >
-              Pedir agora no WhatsApp
-            </a>
-          </div>
+          )}
         </div>
       </div>
 
       {/* FULLSCREEN */}
-      {fullscreen && (
+      {fullscreen && active && (
         <div className="fullscreen" onClick={() => setFullscreen(false)}>
           {active.type === 'image' ? (
             <img src={active.url} />
           ) : (
-            <video src={active.url} controls autoPlay />
+            <video
+              src={active.url}
+              controls
+              autoPlay
+            />
           )}
         </div>
       )}

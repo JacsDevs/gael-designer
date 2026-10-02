@@ -113,3 +113,5 @@
   background-color: #ff2d2d;
 }
 
+.media-card img { width: 400px;}
+.media-card video { width: 400px;}

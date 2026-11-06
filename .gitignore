@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Originais das imagens dos combos (scripts/comprimir-imagens.ps1)
+_originais

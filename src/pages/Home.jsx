@@ -8,13 +8,13 @@ import ComboCard from '../components/ComboCard'
 import WhatsAppButton from '../components/WhatsAppButton'
 import { InstagramIcon, ChatIcon } from '../components/Icons'
 import { getPackages } from '../services/packagesService'
-import { toCombo, withTags, waLink } from '../utils/combos'
+import { DEFAULT_WORKS, HOME_WORKS_LIMIT, WORK_CATEGORIES, getWorks } from '../services/siteService'
+import { useSettings } from '../hooks/useSettings'
+import { toCombo, withTags, waLink, instagramUrl } from '../utils/combos'
+import { getWorkImage } from '../utils/workImages'
 import desktopImage from '../assets/images/desktop-image.jpg'
 import mobileImage from '../assets/images/mobile-image.jpg'
 import camisa from '../assets/images/camisa.jpeg'
-import workCamisa from '../assets/combos/combo-04/02.webp'
-import workFlyer from '../assets/combos/combo-04/03.webp'
-import workLogo from '../assets/combos/combo-04/04.webp'
 
 const BUDGETS = [
   { id: 'all', label: 'Todos', min: 0, max: Infinity },
@@ -32,55 +32,27 @@ const NEEDS = [
   { id: 'video', label: 'Vídeo' },
 ]
 
-// Trabalhos reais (projeto Anarriê de São João). Para adicionar mais,
-// importe a imagem e inclua um item com a categoria correspondente.
-const TABS = [
-  { id: 'all', label: 'Todos' },
-  { id: 'identidade', label: 'Identidade visual' },
-  { id: 'vestuario', label: 'Camisas e abadás' },
-  { id: 'divulgacao', label: 'Flyers e vídeos' },
-  { id: 'convites', label: 'Convites' },
-]
+const TABS = [{ id: 'all', label: 'Todos' }, ...WORK_CATEGORIES]
 
-const WORKS = [
-  { cat: 'vestuario', kind: 'Projeto de camisa', label: 'Anarriê de São João', note: 'No embalo do Pinduca', img: workCamisa },
-  { cat: 'divulgacao', kind: 'Flyer temático', label: 'Anarriê de São João', note: 'No embalo do Pinduca', img: workFlyer },
-  { cat: 'identidade', kind: 'Logotipo', label: 'Anarriê de São João', note: 'No embalo do Pinduca', img: workLogo },
-]
+// Textos que dependem das Configurações do painel (sinal, prazo, valores).
+function buildSteps(cfg) {
+  const rest = 100 - Number(cfg.sinal || 50)
+  return [
+    { title: 'Escolha e me chame', text: 'Um combo ou peças avulsas. O WhatsApp já abre com o seu pedido escrito.' },
+    { title: `Sinal de ${cfg.sinal}% via Pix`, text: 'Com o pagamento confirmado, seu pedido entra na planilha de produção, por ordem de chegada.' },
+    { title: 'Briefing por escrito', text: 'Tema, textos, referências e cores, sempre por mensagem escrita. É isso que evita retrabalho e garante a arte fiel ao pedido.' },
+    { title: `Arte pronta em ~${cfg.prazo} dias úteis`, text: `O prazo varia com a complexidade. Quitados os ${rest}% restantes, você recebe os arquivos finais.` },
+  ]
+}
 
-const PRICES = [
-  { name: 'Folhetos e panfletos digitais', from: true, value: 'R$ 40' },
-  { name: 'Flyer temático', value: 'R$ 70' },
-  { name: 'Logotipo', from: true, value: 'R$ 100' },
-  { name: 'Vídeo de divulgação do tema (60s)', value: 'R$ 100' },
-  { name: 'Convite interativo e digital', from: true, value: 'R$ 100' },
-  { name: 'Abadá (regata)', from: true, value: 'R$ 120' },
-  { name: 'Projeto de camisa', from: true, value: 'R$ 150' },
-  { name: 'Convite virtual com música de fundo', value: 'R$ 150' },
-]
-
-const STEPS = [
-  { title: 'Escolha e me chame', text: 'Um combo ou peças avulsas. O WhatsApp já abre com o seu pedido escrito.' },
-  { title: 'Sinal de 50% via Pix', text: 'Com o pagamento confirmado, seu pedido entra na planilha de produção, por ordem de chegada.' },
-  { title: 'Briefing por escrito', text: 'Tema, textos, referências e cores, sempre por mensagem escrita. É isso que evita retrabalho e garante a arte fiel ao pedido.' },
-  { title: 'Arte pronta em ~10 dias úteis', text: 'O prazo varia com a complexidade. Quitados os 50% restantes, você recebe os arquivos finais.' },
-]
-
-const FAQ = [
-  { q: 'Em que formato recebo os arquivos?', a: 'Artes de camisa em JPG, no padrão, tamanho e qualidade certos para impressão. Logomarcas em PNG, sem fundo.' },
-  { q: 'Posso pedir alterações depois da entrega?', a: 'Pode. Depois da entrega do material final, cada ajuste ou modificação custa R$ 25.' },
-  { q: 'O arquivo editável (PSD) vem junto?', a: 'Não. O valor contratado cobre a arte estática final. O PSD sai a partir de R$ 150, conforme a complexidade, a organização das camadas e o tempo técnico. Todo o material é feito no Adobe Photoshop.' },
-  { q: 'Quando recebo o material final?', a: 'Somente após o pagamento de 100% do valor, sem exceções. Ao pagar o sinal e enviar as informações por escrito, você confirma que leu e aceita estas condições.' },
-]
-
-const TICKER = [
-  'Identidade visual', 'Projeto de camisas', 'Abadás', 'Flyers temáticos',
-  'Vídeo de divulgação', 'Convites digitais', 'Confecção de camisas',
-]
-
-const WA_GERAL = waLink('Olá, Gael! Vim pelo site e quero um orçamento.')
-const WA_AVULSO = waLink('Olá, Gael! Quero orçamento de peça avulsa: [qual peça].')
-const WA_CAMISA = waLink('Olá, Gael! Quero cotar confecção de camisas: [quantidade], [tecido], [tamanhos].')
+function buildFaq(cfg) {
+  return [
+    { q: 'Em que formato recebo os arquivos?', a: 'Artes de camisa em JPG, no padrão, tamanho e qualidade certos para impressão. Logomarcas em PNG, sem fundo.' },
+    { q: 'Posso pedir alterações depois da entrega?', a: `Pode. Depois da entrega do material final, cada ajuste ou modificação custa R$ ${cfg.alteracao}.` },
+    { q: 'O arquivo editável (PSD) vem junto?', a: `Não. O valor contratado cobre a arte estática final. O PSD sai a partir de R$ ${cfg.psd}, conforme a complexidade, a organização das camadas e o tempo técnico. Todo o material é feito no Adobe Photoshop.` },
+    { q: 'Quando recebo o material final?', a: 'Somente após o pagamento de 100% do valor, sem exceções. Ao pagar o sinal e enviar as informações por escrito, você confirma que leu e aceita estas condições.' },
+  ]
+}
 
 function ChipGroup({ label, options, value, onChange, blue = false }) {
   return (
@@ -104,7 +76,9 @@ function ChipGroup({ label, options, value, onChange, blue = false }) {
 }
 
 export default function Home() {
-  const [combos, setCombos] = useState([])
+  const { settings: cfg } = useSettings()
+  const [packages, setPackages] = useState([])
+  const [workDocs, setWorkDocs] = useState(null)
   const [loading, setLoading] = useState(true)
   const [budget, setBudget] = useState('all')
   const [need, setNeed] = useState('all')
@@ -114,10 +88,38 @@ export default function Home() {
 
   useEffect(() => {
     getPackages()
-      .then(data => setCombos(withTags(data.map(toCombo))))
+      .then(setPackages)
       .catch(error => console.error('Erro ao buscar combos:', error))
       .finally(() => setLoading(false))
+
+    getWorks()
+      .then(setWorkDocs)
+      .catch(error => {
+        console.error('Erro ao buscar trabalhos:', error)
+        setWorkDocs([])
+      })
   }, [])
+
+  const combos = useMemo(
+    () => withTags(packages.map(p => toCombo(p, cfg))),
+    [packages, cfg]
+  )
+
+  // Coleção vazia (ou ainda não criada) -> trabalhos padrão.
+  const homeWorks = useMemo(() => {
+    const source = workDocs && workDocs.length ? workDocs : DEFAULT_WORKS
+    return source
+      .filter(w => w.home !== false)
+      .map(w => ({ ...w, img: getWorkImage(w.image) }))
+      .filter(w => w.img)
+      .slice(0, HOME_WORKS_LIMIT)
+  }, [workDocs])
+
+  const waGeral = waLink(cfg.waMsg, cfg.whatsapp)
+  const waAvulso = waLink('Olá, Gael! Quero orçamento de peça avulsa: [qual peça].', cfg.whatsapp)
+  const waCamisa = waLink('Olá, Gael! Quero cotar confecção de camisas: [quantidade], [tecido], [tamanhos].', cfg.whatsapp)
+  const steps = buildSteps(cfg)
+  const faq = buildFaq(cfg)
 
   // Vindo de outra página com uma seção alvo (ex.: "Voltar aos combos").
   useEffect(() => {
@@ -138,8 +140,8 @@ export default function Home() {
     })
   }, [combos, budget, need])
 
-  const tabs = TABS.filter(t => t.id === 'all' || WORKS.some(w => w.cat === t.id))
-  const works = WORKS.filter(w => tab === 'all' || w.cat === tab).slice(0, 4)
+  const tabs = TABS.filter(t => t.id === 'all' || homeWorks.some(w => w.cat === t.id))
+  const works = homeWorks.filter(w => tab === 'all' || w.cat === tab)
 
   return (
     <>
@@ -150,7 +152,7 @@ export default function Home() {
         <img className="hero-m" src={mobileImage} alt="Gael Cardoso, designer gráfico" />
       </section>
 
-      <Ticker items={TICKER} />
+      <Ticker items={cfg.fita} />
 
       {/* COMBOS */}
       <section id="combos" className="wrap combos">
@@ -211,14 +213,14 @@ export default function Home() {
 
           <div className="works-grid">
             {works.map(w => (
-              <figure className="work" key={w.kind}>
+              <figure className="work" key={w.id}>
                 <div className="wimg">
-                  <img src={w.img} alt={`${w.kind} — ${w.label}`} loading="lazy" />
+                  <img src={w.img} alt={`${w.kind} — ${w.client}`} loading="lazy" />
                   <span className="wkind">{w.kind}</span>
                 </div>
                 <figcaption>
-                  <strong>{w.label}</strong>
-                  <span>{w.note}</span>
+                  <strong>{w.client}</strong>
+                  <span>{w.event}</span>
                 </figcaption>
               </figure>
             ))}
@@ -226,9 +228,9 @@ export default function Home() {
 
           <div className="works-foot">
             <p>Tem muito mais no Instagram, com bastidores e entregas recentes.</p>
-            <a className="btn btn-line" href="https://www.instagram.com/gael.designer/" target="_blank" rel="noreferrer">
+            <a className="btn btn-line" href={instagramUrl(cfg.instagram)} target="_blank" rel="noreferrer">
               <InstagramIcon />
-              Ver mais em @gael.designer
+              Ver mais em {cfg.instagram}
             </a>
           </div>
         </div>
@@ -243,24 +245,23 @@ export default function Home() {
               Peça avulsa também tem preço claro. O que depende de medida, quantidade ou número de páginas
               sai sob consulta, é só me mandar os detalhes.
             </p>
-            <a className="btn btn-gold" href={WA_AVULSO} target="_blank" rel="noreferrer">Pedir orçamento avulso</a>
+            <a className="btn btn-gold" href={waAvulso} target="_blank" rel="noreferrer">Pedir orçamento avulso</a>
           </div>
 
           <ul className="price-list">
-            {PRICES.map(p => (
-              <li key={p.name}>
+            {cfg.prices.filter(p => p.name).map((p, i) => (
+              <li key={`${p.name}-${i}`}>
                 <span className="name">{p.name}</span>
                 <span className="dots" aria-hidden="true" />
-                <span className="val">{p.from && <small>a partir de </small>}{p.value}</span>
+                <span className="val">{p.from && <small>a partir de </small>}R$ {p.price}</span>
               </li>
             ))}
-            <li className="consult">
-              <span className="eyebrow">Sob consulta</span>
-              <span>
-                Banners e bandeiras (conforme medidas) · Identidade visual completa · Catálogos (conforme nº de
-                páginas) · Materiais de marketing
-              </span>
-            </li>
+            {cfg.consult.length > 0 && (
+              <li className="consult">
+                <span className="eyebrow">Sob consulta</span>
+                <span>{cfg.consult.join(' · ')}</span>
+              </li>
+            )}
           </ul>
         </div>
       </section>
@@ -278,11 +279,11 @@ export default function Home() {
               </p>
             </div>
             <div className="specs">
-              <div className="spec"><span className="eyebrow">Tecido</span><span className="display">Elanca ou Dry Fit</span></div>
-              <div className="spec"><span className="eyebrow">Modelagem</span><span className="display">Masc · Fem · Infantil</span></div>
-              <div className="spec"><span className="eyebrow">Tamanhos</span><span className="display">2 anos ao XGG</span></div>
+              <div className="spec"><span className="eyebrow">Tecido</span><span className="display">{cfg.tecido}</span></div>
+              <div className="spec"><span className="eyebrow">Modelagem</span><span className="display">{cfg.modelagem}</span></div>
+              <div className="spec"><span className="eyebrow">Tamanhos</span><span className="display">{cfg.tamanhos}</span></div>
             </div>
-            <a className="btn btn-gold" href={WA_CAMISA} target="_blank" rel="noreferrer">Cotar confecção no WhatsApp</a>
+            <a className="btn btn-gold" href={waCamisa} target="_blank" rel="noreferrer">Cotar confecção no WhatsApp</a>
           </div>
         </div>
       </section>
@@ -291,8 +292,8 @@ export default function Home() {
       <section id="como" className="wrap como">
         <h2 className="section-title">Como funciona</h2>
         <ol className="steps">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className={`step ${i === STEPS.length - 1 ? 'highlight' : ''}`}>
+          {steps.map((s, i) => (
+            <li key={s.title} className={`step ${i === steps.length - 1 ? 'highlight' : ''}`}>
               <span className="num">{String(i + 1).padStart(2, '0')}</span>
               <strong>{s.title}</strong>
               <span>{s.text}</span>
@@ -301,7 +302,7 @@ export default function Home() {
         </ol>
 
         <div className="faq">
-          {FAQ.map(f => (
+          {faq.map(f => (
             <details key={f.q}>
               <summary>{f.q}<span className="plus" aria-hidden="true">+</span></summary>
               <p>{f.a}</p>
@@ -317,7 +318,7 @@ export default function Home() {
             <h2>Seu próximo projeto começa com uma mensagem.</h2>
             <p>Conte o que você precisa e eu respondo com o melhor caminho, combo ou sob medida.</p>
           </div>
-          <a className="btn btn-dark" href={WA_GERAL} target="_blank" rel="noreferrer">
+          <a className="btn btn-dark" href={waGeral} target="_blank" rel="noreferrer">
             <ChatIcon />
             Chamar no WhatsApp
           </a>
@@ -325,7 +326,7 @@ export default function Home() {
       </section>
 
       <Footer />
-      <WhatsAppButton href={WA_GERAL} />
+      <WhatsAppButton href={waGeral} />
     </>
   )
 }

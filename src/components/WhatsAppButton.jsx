@@ -1,10 +1,13 @@
 import { ChatIcon } from './Icons'
 import { waLink } from '../utils/combos'
+import { useSettings } from '../hooks/useSettings'
 
 export default function WhatsAppButton({ href }) {
+  const { settings } = useSettings()
+
   return (
     <a
-      href={href || waLink('Olá, Gael! Vim pelo site e quero um orçamento.')}
+      href={href || waLink(settings.waMsg, settings.whatsapp)}
       className="whatsapp-float"
       target="_blank"
       rel="noopener noreferrer"

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useScrollToSection } from '../hooks/useScrollToSection'
 import logo from '../assets/images/logo.png'
 import { InstagramIcon, MenuIcon, CloseIcon } from './Icons'
+import { useSettings } from '../hooks/useSettings'
+import { instagramUrl } from '../utils/combos'
 
 const LINKS = [
   { id: 'combos', label: 'Combos' },
@@ -14,6 +16,7 @@ const LINKS = [
 export default function Header() {
   const [open, setOpen] = useState(false)
   const scrollTo = useScrollToSection()
+  const { settings } = useSettings()
 
   const go = (id) => {
     scrollTo(id)
@@ -29,13 +32,13 @@ export default function Header() {
   const insta = (
     <a
       className="nav-insta"
-      href="https://www.instagram.com/gael.designer/"
+      href={instagramUrl(settings.instagram)}
       target="_blank"
       rel="noreferrer"
-      aria-label="Instagram @gael.designer"
+      aria-label={`Instagram ${settings.instagram}`}
     >
       <InstagramIcon />
-      @gael.designer
+      {settings.instagram}
     </a>
   )
 

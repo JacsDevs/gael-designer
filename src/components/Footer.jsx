@@ -1,8 +1,11 @@
 import logo from '../assets/images/logo.png'
 import { useScrollToSection } from '../hooks/useScrollToSection'
+import { useSettings } from '../hooks/useSettings'
+import { instagramUrl } from '../utils/combos'
 
 export default function Footer() {
   const scrollTo = useScrollToSection()
+  const { settings } = useSettings()
 
   return (
     <footer className="site-footer">
@@ -19,8 +22,8 @@ export default function Footer() {
           <span>© {new Date().getFullYear()} Gael Designer · Gael Cardoso</span>
         </div>
         <span>
-          <a href="https://www.instagram.com/gael.designer/" target="_blank" rel="noreferrer">@gael.designer</a>
-          {' · '}(91) 99915-1500
+          <a href={instagramUrl(settings.instagram)} target="_blank" rel="noreferrer">{settings.instagram}</a>
+          {' · '}{settings.whatsapp}
         </span>
       </div>
     </footer>

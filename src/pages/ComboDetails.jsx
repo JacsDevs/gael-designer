@@ -13,6 +13,7 @@ import {
   ArrowLeftIcon, ChatIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, PlayIcon,
 } from '../components/Icons'
 import { toCombo, waLink } from '../utils/combos'
+import { useSettings } from '../hooks/useSettings'
 
 function formatBRL(value) {
   return Number.isInteger(value) ? `R$ ${value}` : `R$ ${value.toFixed(2).replace('.', ',')}`
@@ -25,8 +26,9 @@ export default function ComboDetailsPage() {
 }
 
 function ComboDetails({ id }) {
-  const [combo, setCombo] = useState(null)
-  const [all, setAll] = useState([])
+  const { settings: cfg } = useSettings()
+  const [pkg, setPkg] = useState(null)
+  const [allPkgs, setAllPkgs] = useState([])
   const [loading, setLoading] = useState(true)
   const [current, setCurrent] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
@@ -40,7 +42,9 @@ function ComboDetails({ id }) {
     getDoc(doc(db, 'packages', id))
       .then(snapshot => {
         if (!alive) return
-        setCombo(snapshot.exists() ? toCombo({ id: snapshot.id, ...snapshot.data() }) : null)
+        // Combo oculto no painel se comporta como inexistente.
+        const data = snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null
+        setPkg(data && data.active !== false ? data : null)
       })
       .catch(error => console.error('Erro ao buscar combo:', error))
       .finally(() => alive && setLoading(false))
@@ -50,9 +54,12 @@ function ComboDetails({ id }) {
 
   useEffect(() => {
     getPackages()
-      .then(data => setAll(data.map(toCombo)))
+      .then(setAllPkgs)
       .catch(error => console.error('Erro ao buscar combos:', error))
   }, [])
+
+  const combo = useMemo(() => (pkg ? toCombo(pkg, cfg) : null), [pkg, cfg])
+  const all = useMemo(() => allPkgs.map(p => toCombo(p, cfg)), [allPkgs, cfg])
 
   // Combos com preço mais próximo do atual.
   const related = useMemo(() => {
@@ -104,7 +111,9 @@ function ComboDetails({ id }) {
   const titleMain = plusAt > 0 ? name.slice(0, plusAt).trim() : name
   const titleGold = plusAt > 0 ? name.slice(plusAt).trim() : ''
 
-  const half = price != null ? price / 2 : null
+  const pct = Math.min(Math.max(Number(cfg.sinal) || 50, 0), 100)
+  const deposit = price != null ? Math.round(price * pct) / 100 : null
+  const remaining = price != null ? price - deposit : null
 
   return (
     <>
@@ -213,8 +222,8 @@ function ComboDetails({ id }) {
                   </div>
                 </div>
                 <div className="pay-split">
-                  <span><strong>{formatBRL(half)}</strong> de sinal via Pix para começar</span>
-                  <span><strong>{formatBRL(half)}</strong> na entrega dos arquivos</span>
+                  <span><strong>{formatBRL(deposit)}</strong> de sinal via Pix para começar</span>
+                  <span><strong>{formatBRL(remaining)}</strong> na entrega dos arquivos</span>
                 </div>
               </div>
             )}
@@ -226,7 +235,7 @@ function ComboDetails({ id }) {
               </a>
               <a
                 className="btn btn-line"
-                href={waLink(`Olá, Gael! Tenho uma dúvida sobre o COMBO ${n}: `)}
+                href={waLink(`Olá, Gael! Tenho uma dúvida sobre o COMBO ${n}: `, cfg.whatsapp)}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -235,9 +244,9 @@ function ComboDetails({ id }) {
             </div>
 
             <ul className="facts">
-              <li><span className="display">~10 dias úteis</span><span>após o sinal e o briefing</span></li>
+              <li><span className="display">~{cfg.prazo} dias úteis</span><span>após o sinal e o briefing</span></li>
               <li><span className="display">Por escrito</span><span>tema, textos e referências</span></li>
-              <li><span className="display">R$ 25</span><span>por alteração após a entrega</span></li>
+              <li><span className="display">R$ {cfg.alteracao}</span><span>por alteração após a entrega</span></li>
             </ul>
           </section>
         </div>
@@ -279,7 +288,7 @@ function ComboDetails({ id }) {
           </div>
           <a
             className="btn btn-dark"
-            href={waLink('Olá, Gael! Quero montar um pacote sob medida com: [peças].')}
+            href={waLink('Olá, Gael! Quero montar um pacote sob medida com: [peças].', cfg.whatsapp)}
             target="_blank"
             rel="noreferrer"
           >

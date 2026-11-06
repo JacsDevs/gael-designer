@@ -1,20 +1,17 @@
-import { FaWhatsapp } from 'react-icons/fa'
+import { ChatIcon } from './Icons'
+import { waLink } from '../utils/combos'
 
-export default function WhatsAppButton() {
-  const phoneNumber = '5591999151500'
-  const message = 'Olá! Gostaria de mais informações'
-
-  const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
-
+export default function WhatsAppButton({ href }) {
   return (
     <a
-      href={whatsappLink}
+      href={href || waLink('Olá, Gael! Vim pelo site e quero um orçamento.')}
       className="whatsapp-float"
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Falar no WhatsApp"
+      aria-label="Falar com o Gael no WhatsApp"
     >
-      <FaWhatsapp />
+      <ChatIcon />
+      WhatsApp
     </a>
   )
 }

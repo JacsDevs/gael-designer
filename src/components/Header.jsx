@@ -1,72 +1,67 @@
 import { useState } from 'react'
-import { FaInstagram, FaWhatsapp, FaFacebook } from 'react-icons/fa'
+import { useScrollToSection } from '../hooks/useScrollToSection'
+import logo from '../assets/images/logo.png'
+import { InstagramIcon, MenuIcon, CloseIcon } from './Icons'
+
+const LINKS = [
+  { id: 'combos', label: 'Combos' },
+  { id: 'trabalhos', label: 'Trabalhos' },
+  { id: 'avulsos', label: 'Valores individuais' },
+  { id: 'camisas', label: 'Confecção de camisas' },
+  { id: 'como', label: 'Como funciona' },
+]
 
 export default function Header() {
   const [open, setOpen] = useState(false)
+  const scrollTo = useScrollToSection()
 
-  const handleClick = (id) => {
-    const section = document.getElementById(id)
-    section?.scrollIntoView({ behavior: 'smooth' })
+  const go = (id) => {
+    scrollTo(id)
     setOpen(false)
   }
 
+  const links = LINKS.map(l => (
+    <button key={l.id} type="button" className="nav-link" onClick={() => go(l.id)}>
+      {l.label}
+    </button>
+  ))
+
+  const insta = (
+    <a
+      className="nav-insta"
+      href="https://www.instagram.com/gael.designer/"
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Instagram @gael.designer"
+    >
+      <InstagramIcon />
+      @gael.designer
+    </a>
+  )
+
   return (
-    <header className="top-header">
-      <div className="nav-container">
+    <header className="site-header">
+      <nav className="nav-pill" aria-label="Principal">
+        <button type="button" className="nav-logo" onClick={() => go('topo')} aria-label="Gael Designer, início">
+          <img src={logo} alt="Gael Designer" />
+        </button>
 
-        {/* MENU DESKTOP */}
-        <div className="nav-desktop">
-          <nav className="nav-cont-desktop">
-            <button onClick={() => handleClick('combos')}>Combos</button>
-            <button onClick={() => handleClick('valoresind')}>Individuais</button>
-            <button onClick={() => handleClick('confecamisas')}>Confecção Camisas</button>
-            <button onClick={() => handleClick('infoimport')}>Informações</button>
-          </nav>
-
-          <div className="social-icons">
-            
-            <a
-              href="https://www.instagram.com/gael.designer/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram - @gael.designer"
-              className="instagram-link"
-            >
-              <FaInstagram />
-              <span>@gael.designer</span>
-            </a>
-          </div>
-        </div>
+        <div className="nav-links">{links}</div>
+        {insta}
 
         <button
-          className={`hamburger ocultarhamburger ${open ? 'open' : ''}`}
+          type="button"
+          className="hamburger"
           onClick={() => setOpen(!open)}
+          aria-expanded={open}
           aria-label={open ? 'Fechar menu' : 'Abrir menu'}
         >
-          <span />
-          <span />
-          <span />
+          {open ? <CloseIcon /> : <MenuIcon />}
         </button>
-      </div>
 
-      {/* MENU MOBILE */}
-      <nav className={`nav-mobile ${open ? 'open' : ''}`}>
-        <button onClick={() => handleClick('combos')}>Combos</button>
-        <button onClick={() => handleClick('valoresind')}>Individuais</button>
-        <button onClick={() => handleClick('confecamisas')}>Confecção Camisas</button>
-        <button onClick={() => handleClick('infoimport')}>Informações</button>
-
-        <div className="instamobile">
-          <a
-            href="https://www.instagram.com/gael.designer/"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Instagram - @gael.designer"
-            className="instagram-link"
-          >
-            <FaInstagram />
-            <span>@gael.designer</span>
-          </a>
+        <div className={`nav-mobile ${open ? 'open' : ''}`}>
+          {links}
+          {insta}
         </div>
       </nav>
     </header>
